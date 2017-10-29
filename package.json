@@ -1,0 +1,25 @@
+{
+    "name": "mooft",
+    "version": "1.0.0",
+    "description": "mooft (मुफ्त) - Free monad library",
+    "main": "index.js",
+    "scripts": {
+        "test": "tape test/*.js | tap-min",
+        "test-watch": "find package.json src/*.js test/*.js | entr -c npm run test"
+    },
+    "keywords": [
+        "monad",
+        "free monad",
+        "interpreter"
+    ],
+    "author": "joncfoo <joncfoo@gmail.com>",
+    "license": "ISC",
+    "dependencies": {
+        "daggy": "1.2.0"
+    },
+    "devDependencies": {
+        "fluture": "7.2.1",
+        "tap-min": "1.2.2",
+        "tape": "4.8.0"
+    }
+}
