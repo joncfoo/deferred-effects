@@ -2,8 +2,8 @@
 
 const daggy = require('daggy')
 
-// ProgramView represents a generic representation of all computable programs -
-// used to interpret `Program`s.
+// ProgramView represents a generic representation of computable programs - used
+// to interpret `Program`s.
 const ProgramView =
       daggy.taggedSum('ProgramView', {
           // Return is a constructor that holds a `value` to return.
@@ -114,6 +114,29 @@ Program.prototype.interpretM = function(transformation) {
 
 // Program.interpretM is a convenience function to interpret a program.
 Program.interpretM = program => transformation => program.interpretM(transformation)
+
+// Program.do takes a `Program` written as a generator function and drains it
+// when executed. see: https://github.com/Risto-Stevcev/do-notation
+Program.do = function(generatorFunction) {
+    const generator = generatorFunction()
+
+    return function next(error, value) {
+        const result = generator.next(value)
+
+        if (result.done) {
+            // return the value of the last yield if no return value was
+            // explicitly provided
+
+            if (!result.value) {
+                return Program.of(value)
+            } else {
+                return Program.of(result.value)
+            }
+        } else {
+            return result.value.chain(nextValue => next(null, nextValue) || Program.of(res))
+        }
+    }()
+}
 
 
 // makeInstructions builds instructions (`Program.Instr`) from a sum type (args

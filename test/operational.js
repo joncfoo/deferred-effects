@@ -97,6 +97,58 @@ test('Program', T => {
         t.end()
     })
 
+    T.test('.do', t => {
+        const {Get, Put} = makeInstructions('Store', {
+            Get: ['name'],
+            Put: ['name', 'value'],
+        })
+
+        const programNoReturn = Program.do(function*() {
+            const k = yield Get('k')
+            yield Put('l', k + '!!')
+            yield Get('l')
+        })
+
+        const programWithReturn = Program.do(function*() {
+            const k = yield Get('k')
+            yield Put('l', k + '!!')
+            const l = yield Get('l')
+            return l
+        })
+
+        const store = { k: 'hello' }
+        const programAsFuture = {
+            Return: (value) =>
+                Future.of(value),
+            Get: (value) =>
+                new Future((reject, resolve) => {
+                    if (value in store)
+                        resolve(store[value])
+                    else
+                        reject(`store does not contain key: ${value}`)
+                }),
+            Put: (name, value) =>
+                new Future((reject, resolve) => {
+                    store[name] = value
+                    resolve({})
+                }),
+        }
+
+        const run = program => program.interpretM(programAsFuture).fork(
+            error => {
+                t.fail('Unexpected: ' + error)
+            },
+            result => {
+                t.equals(result, 'hello!!')
+            }
+        )
+
+        run(programNoReturn)
+        run(programWithReturn)
+
+        t.end()
+    })
+
     T.test('.prototype.interpretM', t => {
         const {Get, Put} = makeInstructions('Store', {
             Get: ['name'],
