@@ -3,7 +3,7 @@ const Future = require('fluture')
 const {
     Program,
     ProgramView,
-    makeInstructions
+    makeInstructions,
 } = require('../src/operational')
 
 test('Program', T => {

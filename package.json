@@ -1,7 +1,7 @@
 {
-    "name": "mooft",
+    "name": "deferred-effects",
     "version": "1.0.0",
-    "description": "mooft (मुफ्त) - Free monad library",
+    "description": "",
     "main": "index.js",
     "scripts": {
         "test": "tape test/*.js | tap-min",
