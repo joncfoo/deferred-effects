@@ -1,6 +1,6 @@
 [![pipeline status](https://gitlab.com/joncfoo/deferred-effects/badges/master/pipeline.svg)](https://gitlab.com/joncfoo/deferred-effects/commits/master)
 
-# deferred-effects
+# [deferred-effects](https://joncfoo.gitlab.io/deferred-effects/)
 
 1. Write your program as a set of instructions
 2. Use only those instructions to build program
