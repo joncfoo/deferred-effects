@@ -1,16 +1,19 @@
 image: node:6.11.5
 
-# This folder is cached between builds
 cache:
   paths:
   - node_modules/
 
+before_script:
+  - npm install
+
 test:
+  stage: test
   script:
-   - npm install
    - npm run test
 
 pages:
+  stage: deploy
   script:
   - echo 'Nothing to do...'
   artifacts:
