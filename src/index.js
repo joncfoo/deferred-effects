@@ -2,7 +2,7 @@ const {
     Program,
     ProgramView,
     makeInstructions,
-} = require('./src/operational')
+} = require('./operational')
 
 module.exports = {
     Program,
