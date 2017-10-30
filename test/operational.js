@@ -11,7 +11,7 @@ test('Program', T => {
         t.deepEqual(
             Program.of(42),
             Program.Lift(42),
-            'of === Lift',
+            'of === Lift'
         )
         t.end()
     })
@@ -20,7 +20,7 @@ test('Program', T => {
         t.deepEqual(
             Program.emit('nyaa'),
             Program.Instr('nyaa'),
-            'emit === Instr',
+            'emit === Instr'
         )
         t.end()
     })
@@ -29,7 +29,7 @@ test('Program', T => {
         t.deepEqual(
             Program.of('hello').chain(Program.emit),
             Program.Bind(Program.Lift('hello'), Program.emit),
-            'chain correctly builds up a thunk',
+            'chain correctly builds up a thunk'
         )
         t.end()
     })
@@ -56,7 +56,7 @@ test('Program', T => {
         t.equal(
             Program.Bind(Program.Lift(42), a => Program.of(f(a))).toString(),
             Program.of(42).map(f).toString(),
-            'map correctly builds up a thunk',
+            'map correctly builds up a thunk'
         )
         t.end()
     })
@@ -71,27 +71,27 @@ test('Program', T => {
         t.deepEqual(
             Program.emit('doit').toProgramView(),
             ProgramView.Continue('doit', Program.of),
-            'Instr === Continue',
+            'Instr === Continue'
         )
 
         const plus10M = x => Program.of(x + 10)
         t.deepEqual(
             Program.of(42).chain(plus10M).toProgramView(),
             ProgramView.Return(52),
-            'Lift(x) >>= f(x) === Return(y)',
+            'Lift(x) >>= f(x) === Return(y)'
         )
 
         t.deepEqual(
             Program.emit('doit').chain(plus10M).toProgramView(),
             ProgramView.Continue('doit', plus10M),
-            'Instr(x) >>= f(x) === Continue(x)',
+            'Instr(x) >>= f(x) === Continue(x)'
         )
 
         const div5M = y => Program.of(y / 5)
         t.deepEqual(
             Program.of(40).chain(plus10M).chain(div5M).toProgramView(),
             ProgramView.Return(10),
-            'Lift(x) >>= f >>= g === ???',
+            'Lift(x) >>= f >>= g === ???'
         )
 
         t.end()
