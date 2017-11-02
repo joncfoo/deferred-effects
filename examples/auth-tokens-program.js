@@ -62,31 +62,46 @@ const program = Program.do(function *() {
         return
     }
 
-    // action :: UIAction
-    let action = yield Instruction.AwaitUIAction
+    while (1) {
+        // actionResult :: Result UIAction
+        const actionResult = yield Instruction.AwaitUIAction
 
-    while (!UIAction.Exit.is(action)) {
+        if (Result.Error.is(actionResult)) {
+            yield Instruction.NotifyError(actionResult.error)
+            break
+        }
+
+        const action = actionResult.value
+
+        if (UIAction.Exit.is(action)) {
+            break
+        }
 
         if (UIAction.Delete.is(action)) {
             const tokenID = action.tokenID
             const confirmed = yield Instruction.ConfirmDeletion(tokenID)
 
             if (confirmed) {
-                yield Instruction.DeleteToken(tokenID)
+                const deleteResult = yield Instruction.DeleteToken(tokenID)
+                if (Result.Error.is(deleteResult)) {
+                    yield Instruction.NotifyError(deleteResult.error)
+                }
             }
         }
 
         if (UIAction.Create.is(action)) {
             const tokenName = yield Instruction.PromptNewTokenName
-            const token = yield Instruction.CreateToken(tokenName)
-            yield Instruction.DisplayNewToken(token)
+            const tokenResult = yield Instruction.CreateToken(tokenName)
+            if (Result.Error.is(tokenResult)) {
+                yield Instruction.NotifyError(tokenResult.error)
+            } else {
+                yield Instruction.DisplayNewToken(tokenResult.value)
+            }
         }
 
         if (UIAction.Show.is(action)) {
             yield Instruction.DisplayAllTokens
         }
-
-        action = yield Instruction.AwaitUIAction
     }
 })
 

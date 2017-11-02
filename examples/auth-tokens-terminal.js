@@ -14,12 +14,53 @@ const ReadLine = readline.createInterface({
     output: process.stdout,
 })
 
+// close the underlying stream else the program never terminates as it always
+// waits for data on stdin.
 ReadLine.on('close', () => process.stdin.destroy())
 
-// Our data store
-const Store = {
-    tokens: [],
+
+// Our "data store"
+function Store(tokens) {
+    this.tokens = tokens
 }
+
+Store.prototype.fetchTokens = function() {
+    return Future.of(Result.Ok(this.tokens))
+}
+
+Store.prototype.createToken = function(tokenName) {
+    if (tokenName.length < 8) {
+        return Future.of(Result.Error('Token name must be 8 or more characters'))
+    }
+
+    // generate a new ID: max value + 1
+    const newID = this.tokens.map(t => t.id).reduce((i2, i) => i > i2 ? i : i2, 0) + 1
+    const newName = '****' + tokenName.substr(tokenName.length - 4, 4)
+    const token = Token(newID, newName)
+    this.tokens.push(token)
+
+    // simulate work
+    return Future.after(1000, Result.Ok(token))
+}
+
+Store.removeToken = function(tokenID) {
+    const i = DataStore.tokens.findIndex(t => t.id === tokenID)
+    if (i < 0) {
+        return Future.of(Result.Error(`Invalid token ID: ${tokenID}`))
+    } else {
+        this.tokens = this.tokens.filter(t => t.id !== tokenId)
+        return Future.of(Result.Ok({}))
+    }
+}
+
+
+const DataStore = new Store([
+    Token(1, '****abcd'),
+    Token(2, '****efgh'),
+    Token(3, '****ijkl'),
+    Token(4, '****mnop'),
+])
+
 
 const effectsInterpreter = {
     Return: (value) =>
@@ -28,39 +69,14 @@ const effectsInterpreter = {
     NotifyError: (error) =>
         Future.reject(error),
 
-    ListTokens: () => {
-        Store.tokens = [
-            Token(1, '****abcd'),
-            Token(2, '****efgh'),
-            Token(3, '****ijkl'),
-            Token(4, '****mnop'),
-        ]
-        return Future.of(Result.Ok(Store.tokens))
-    },
+    ListTokens: () =>
+        DataStore.fetchTokens(),
 
-    DeleteToken: (tokenID) => {
-        return new Future((reject, resolve) => {
-            const i = Store.tokens.findIndex(t => t.id === tokenID)
+    DeleteToken: (tokenID) =>
+        DataStore.removeToken(tokenID),
 
-            if (i < 0)
-                reject(`Invalid token ID: ${tokenID}`)
-            else {
-                console.log(`Deleting token ${tokenID}...`)
-                resolve({})
-            }
-        })
-    },
-
-    CreateToken: (tokenName) => {
-        console.log('Creating token...')
-        const tokenID = Store.tokens.map(t => t.id).reduce((i2, i) => i > i2 ? i : i2, 0) + 1
-        const token = Token(tokenID, '****' + tokenName.substr(tokenName.length - 4, 4))
-        Store.tokens.push(token)
-        return Future.after(1000, token)
-    },
-
-    NotifyError: (error) =>
-        Future.reject(error),
+    CreateToken: (tokenName) =>
+        DataStore.createToken(tokenName),
 
     AwaitUIAction: () => {
         return new Future((reject, resolve) => {
@@ -71,27 +87,30 @@ C: create a token
 D: delete a token
 Q: quit
 action #> `
+            const resolveOk = value => resolve(Result.Ok(value))
+            const resolveError = err => resolve(Result.Error(err))
+
             ReadLine.question(prompt, input => {
                 switch (input.toLowerCase()) {
                 case 's':
-                    resolve(UIAction.Show)
+                    resolveOk(UIAction.Show)
                     break
                 case 'c':
-                    resolve(UIAction.Create)
+                    resolveOk(UIAction.Create)
                     break
                 case 'd':
                     ReadLine.question('Which token id? #> ', id => {
                         if (Number.isNaN(id))
-                            reject(`${id} is not a valid ID`)
+                            resolveError(`${id} is not a valid ID`)
                         else
-                            resolve(UIAction.Delete(Number(id)))
+                            resolveOk(UIAction.Delete(Number(id)))
                     })
                     break
                 case 'q':
-                    resolve(UIAction.Exit)
+                    resolveOk(UIAction.Exit)
                     break
                 default:
-                    reject(`${input} is not a valid action`)
+                    resolveError(`${input} is not a valid action`)
                     break
                 }
             })
@@ -99,13 +118,13 @@ action #> `
     },
 
     DisplayAllTokens: () => {
-        console.log(Store.tokens)
+        DataStore.tokens.forEach(t => console.log(t.toString()))
         return Future.of({})
     },
 
     ConfirmDeletion: (tokenID) => {
         return new Future((reject, resolve) => {
-            const prompt = `Are you sure you want to delete token ${tokenID}?\n[Y/N] #> `
+            const prompt = `Are you sure you want to delete token ${tokenID}? [Y/N] #> `
             ReadLine.question(prompt, sure => {
                 resolve(sure.toLowerCase() === 'y')
             })
@@ -115,27 +134,20 @@ action #> `
     PromptNewTokenName: () => {
         return new Future((reject, resolve) => {
             ReadLine.question('New token name? #> ', name => {
-                if (name.length < 8)
-                    reject('Token name should be 8 or more characters')
-                else
-                    resolve(name)
+                resolve(name)
             })
         })
     },
 
     DisplayNewToken: (token) => {
-        console.log('New token created:', token)
+        console.log('New token created:', token.toString())
         return Future.of({})
     }
 }
 
-program.interpretM(effectsInterpreter).fork(
-    error => {
-        console.error('Oops: ', error)
+program.interpretM(effectsInterpreter)
+    .fold(Result.Error, Result.Ok)
+    .value(value => {
+        console.log('Program returned:', value.toString())
         ReadLine.close()
-    },
-    result => {
-        console.log('Program returned:', result.toString())
-        ReadLine.close()
-    }
-)
+    })
