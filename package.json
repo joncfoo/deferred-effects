@@ -5,7 +5,9 @@
     "main": "src/index.js",
     "scripts": {
         "test": "tape test/*.js | tap-min",
-        "test-watch": "find package.json src/*.js test/*.js | entr -c npm run test"
+        "test-watch": "find package.json src/*.js test/*.js | entr -c npm run test",
+        "build-examples": "mkdir -p public/examples; ./node_modules/.bin/browserify -o public/examples/app.js examples/auth-tokens-mithril.js -t [ babelify --presets [ env ] ]",
+        "build-examples-watch": "find src/ examples/ | entr -c npm run build-examples"
     },
     "keywords": [
         "monad",
@@ -18,7 +20,13 @@
         "daggy": "1.2.0"
     },
     "devDependencies": {
+        "babel-cli": "6.26.0",
+        "babel-polyfill": "6.26.0",
+        "babel-preset-env": "1.6.1",
+        "babelify": "8.0.0",
+        "browserify": "14.5.0",
         "fluture": "7.2.1",
+        "mithril": "1.1.5",
         "tap-min": "1.2.2",
         "tape": "4.8.0"
     }
